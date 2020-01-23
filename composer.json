@@ -1,0 +1,29 @@
+{
+  "name": "drakakisgeo/billit",
+  "description": "The php client for Billit.io API",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "George Drakakis",
+      "email": "george@drakakis.gr"
+    }
+  ],
+  "require": {
+    "guzzlehttp/guzzle": "~6.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Drakakisgeo\\Billit\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Drakakisgeo\\Billit\\Tests\\": "tests"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8.5",
+    "orchestra/testbench": "^4.5"
+  }
+}
