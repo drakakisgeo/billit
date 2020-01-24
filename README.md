@@ -19,7 +19,10 @@ $ composer require drakakisgeo/billit
 ### Laravel Framework
 If you use the Laravel Framework you need to provide your Billit API key, so add a key to your config/services.php file as:
 ``` php
-'billit'=> env('BILLIT_TOKEN')
+'billit' => [
+        'token' => env('BILLIT_API_TOKEN'),
+        'baseUrl' => env('BILLIT_API_BASEURL')
+    ]
 ```
 To initialize the client is just a call as this:
 
