@@ -62,10 +62,10 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) and [CONDUCT](CONDUCT.md) for details
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
 
-[ico-version]: https://img.shields.io/packagist/v/drakakisgeo/mailtester.svg?style=flat-square
+[ico-version]: https://img.shields.io/packagist/v/drakakisgeo/billit.svg?style=flat-square
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/drakakisgeo/mailtester/master.svg?style=flat-square
-[link-packagist]: https://packagist.org/packages/drakakisgeo/mailtester
-[link-travis]: https://travis-ci.org/drakakisgeo/mailtester
+[ico-travis]: https://img.shields.io/travis/drakakisgeo/billit/master.svg?style=flat-square
+[link-packagist]: https://packagist.org/packages/drakakisgeo/billit
+[link-travis]: https://travis-ci.org/drakakisgeo/billit
 [link-author]: https://github.com/drakakisgeo
 [link-contributors]: ../../contributors
