@@ -1,7 +1,8 @@
 <?php
 
-namespace DrakakisGeo\Billit;
+namespace Drakakisgeo\Billit;
 
+use GuzzleHttp\Psr7\Response;
 use stdClass;
 use Exception;
 use GuzzleHttp\Client;
@@ -13,6 +14,7 @@ class Billit
 
     private $client;
     private $token = null;
+    private $myAccountCached = null;
 
     /**
      * Billit constructor.
@@ -30,27 +32,46 @@ class Billit
         return $this->touch('get', '/');
     }
 
-    public function myAccount()
+    /**
+     * @return stdClass
+     * @throws Exception
+     */
+    public function myAccount(): stdClass
     {
-        return $this->touch('get', 'account');
+        if (is_null($this->myAccountCached)) {
+            $this->myAccountCached = $this->touch('get', 'account');
+        }
+        return $this->myAccountCached;
     }
 
-    public function customersList(array $params = null)
+    /**
+     * @param array|null $params
+     * @return stdClass
+     * @throws Exception
+     */
+    public function customers(array $params = null)
     {
-        return $this->touch('get', 'customers');
+        return $this->touch('get', 'customers', $params);
     }
 
-    public function customersCreate(array $payload)
+
+    /**
+     * @param array $payload
+     * @return stdClass
+     * @throws Exception
+     */
+    public function customerCreate(array $payload): stdClass
     {
         return $this->touch('post', 'customers', $payload);
     }
+
 
     /**
      * @param int $resourceId
      * @param array $payload
      * @return stdClass
      */
-    public function customersUpdate(int $resourceId, array $payload): stdClass
+    public function customerUpdate(int $resourceId, array $payload): stdClass
     {
         return $this->touch('put', "customers/{$resourceId}", $payload);
     }
@@ -59,18 +80,244 @@ class Billit
      * @param int $resourceId
      * @return stdClass
      */
-    public function customersDelete(int $resourceId): stdClass
+    public function customerShow(int $resourceId): stdClass
+    {
+        return $this->touch('get', "customers/{$resourceId}");
+    }
+
+    /**
+     * @param int $resourceId
+     * @throws Exception
+     */
+    public function customerDelete(int $resourceId)
     {
         return $this->touch('delete', "customers/{$resourceId}");
+    }
+
+    /**
+     * @param array|null $params
+     * @return stdClass
+     * @throws Exception
+     */
+    public function invoices(array $params = null)
+    {
+        return $this->touch('get', 'invoices', $params);
+    }
+
+    /**
+     * @param array $payload
+     * @return stdClass
+     * @throws Exception
+     */
+    public function invoiceCreate(array $payload): stdClass
+    {
+        return $this->touch('post', 'invoices', $payload);
+    }
+
+    /**
+     * @param string $uuid
+     * @param array $payload
+     * @return stdClass
+     */
+    public function invoiceUpdate(string $uuid, array $payload): stdClass
+    {
+        return $this->touch('put', "invoices/{$uuid}", $payload);
+    }
+
+    /**
+     * @param string $uuid
+     * @return stdClass
+     */
+    public function invoiceShow(string $uuid): stdClass
+    {
+        return $this->touch('get', "invoices/{$uuid}");
+    }
+
+    /**
+     * @param string $uuid
+     * @throws Exception
+     */
+    public function invoiceDelete(string $uuid)
+    {
+        return $this->touch('delete', "invoices/{$uuid}");
+    }
+
+    /**
+     * @param array|null $params
+     * @return stdClass
+     * @throws Exception
+     */
+    public function products(array $params = null)
+    {
+        return $this->touch('get', 'products', $params);
+    }
+
+
+    /**
+     * @param array $payload
+     * @return stdClass
+     * @throws Exception
+     */
+    public function productCreate(array $payload): stdClass
+    {
+        return $this->touch('post', 'products', $payload);
+    }
+
+
+    /**
+     * @param int $resourceId
+     * @param array $payload
+     * @return stdClass
+     */
+    public function productUpdate(int $resourceId, array $payload): stdClass
+    {
+        return $this->touch('put', "products/{$resourceId}", $payload);
     }
 
     /**
      * @param int $resourceId
      * @return stdClass
      */
-    public function customersShow(int $resourceId): stdClass
+    public function productShow(int $resourceId): stdClass
     {
-        return $this->touch('get', "customers/{$resourceId}");
+        return $this->touch('get', "products/{$resourceId}");
+    }
+
+    /**
+     * @param int $resourceId
+     * @throws Exception
+     */
+    public function productDelete(int $resourceId)
+    {
+        return $this->touch('delete', "products/{$resourceId}");
+    }
+
+    /**
+     * @param array|null $params
+     * @return stdClass
+     * @throws Exception
+     */
+    public function payments(array $params = null)
+    {
+        return $this->touch('get', 'payments', $params);
+    }
+
+
+    /**
+     * @param array $payload
+     * @return stdClass
+     * @throws Exception
+     */
+    public function paymentCreate(array $payload): stdClass
+    {
+        return $this->touch('post', 'payments', $payload);
+    }
+
+
+    /**
+     * @param int $resourceId
+     * @throws Exception
+     */
+    public function paymentDelete(int $resourceId)
+    {
+        return $this->touch('delete', "payments/{$resourceId}");
+    }
+
+    /**
+     * @param array|null $params
+     * @return stdClass
+     * @throws Exception
+     */
+    public function purchases(array $params = null)
+    {
+        return $this->touch('get', 'purchases', $params);
+    }
+
+
+    /**
+     * @param array $payload
+     * @return stdClass
+     * @throws Exception
+     */
+    public function purchaseCreate(array $payload): stdClass
+    {
+        return $this->touch('post', 'purchases', $payload);
+    }
+
+
+    /**
+     * @param int $resourceId
+     * @return stdClass
+     */
+    public function purchaseShow(int $resourceId): stdClass
+    {
+        return $this->touch('get', "purchases/{$resourceId}");
+    }
+
+    /**
+     * @param int $resourceId
+     * @throws Exception
+     */
+    public function purchaseDelete(int $resourceId)
+    {
+        return $this->touch('delete', "purchases/{$resourceId}");
+    }
+
+    /**
+     * @param array|null $params
+     * @return stdClass
+     * @throws Exception
+     */
+    public function tags(array $params = null)
+    {
+        return $this->touch('get', 'tags', $params);
+    }
+
+
+    /**
+     * @param int $resourceId
+     * @return stdClass
+     */
+    public function tagShow(int $resourceId): stdClass
+    {
+        return $this->touch('get', "tags/{$resourceId}");
+    }
+
+    /**
+     * @param int $resourceId
+     * @throws Exception
+     */
+    public function tagDelete(int $resourceId)
+    {
+        return $this->touch('delete', "tags/{$resourceId}");
+    }
+
+    /**
+     * @param array|null $params
+     * @return stdClass
+     * @throws Exception
+     */
+    public function suppliers(array $params = null)
+    {
+        return $this->touch('get', 'suppliers', $params);
+    }
+
+    /**
+     * @param int $resourceId
+     * @return stdClass
+     */
+    public function supplierShow(int $resourceId): stdClass
+    {
+        return $this->touch('get', "suppliers/{$resourceId}");
+    }
+
+    /**
+     * @param int $resourceId
+     * @throws Exception
+     */
+    public function supplierDelete(int $resourceId)
+    {
+        return $this->touch('delete', "suppliers/{$resourceId}");
     }
 
 
@@ -78,9 +325,8 @@ class Billit
      * @param string $action
      * @param string $url
      * @param array|null $data
-     * @return stdClass
      */
-    private function touch(string $action, string $url, array $payload = null): stdClass
+    private function touch(string $action, string $url, array $payload = null)
     {
         if ($this->actionIsNotAllowed($action)) {
             throw new Exception("Use one of the allowed actions for this client.");
@@ -95,6 +341,7 @@ class Billit
                 $options['json'] = $payload;
             }
 
+            /** @var Response $response */
             $response = $this->client->$action($url, $options);
             return json_decode($response->getBody()->getContents());
 

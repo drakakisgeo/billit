@@ -5,7 +5,7 @@ namespace Drakakisgeo\Billit\Tests;
 use Drakakisgeo\Billit\Billit;
 use PHPUnit\Framework\TestCase;
 
-class ProductsTest extends TestCase
+class PaymentsTest extends TestCase
 {
 
     use GuzzleMocker;
@@ -13,7 +13,7 @@ class ProductsTest extends TestCase
     /**
      * @test
      */
-    public function products()
+    public function payments()
     {
         $mock = $this->guzzleMock('GET', [
             'data' => [
@@ -22,7 +22,7 @@ class ProductsTest extends TestCase
             ],
         ]);
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->products();
+        $response = $billit->payments();
         $this->assertEquals(2, sizeof($response->data));
         $this->assertEquals(1, $response->data[0]->id);
     }
@@ -30,45 +30,22 @@ class ProductsTest extends TestCase
     /**
      * @test
      */
-    public function create_product()
+    public function create_payment()
     {
         $mock = $this->guzzleMock('POST', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->productCreate(['id' => 1, 'inCharge' => 'tester1']);
+        $response = $billit->paymentCreate(['id' => 1, 'inCharge' => 'tester1']);
         $this->assertEquals(1, $response->data->id);
     }
 
     /**
      * @test
      */
-    public function update_product()
-    {
-        $mock = $this->guzzleMock('PUT', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
-        $billit = new Billit('randomtoken', $mock);
-        $response = $billit->productUpdate(123,['id' => 1, 'inCharge' => 'tester2']);
-        $this->assertEquals(1, $response->data->id);
-    }
-
-    /**
-     * @test
-     */
-    public function show_product()
-    {
-        $mock = $this->guzzleMock('get', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
-        $billit = new Billit('randomtoken', $mock);
-        $response = $billit->productShow(123);
-        $this->assertEquals(1, $response->data->id);
-    }
-
-
-    /**
-     * @test
-     */
-    public function delete_product()
+    public function delete_payment()
     {
         $mock = $this->guzzleMock('DELETE');
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->productDelete(123);
+        $response = $billit->paymentDelete(123);
         $this->assertEmpty($response);
     }
 

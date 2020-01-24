@@ -5,7 +5,7 @@ namespace Drakakisgeo\Billit\Tests;
 use Drakakisgeo\Billit\Billit;
 use PHPUnit\Framework\TestCase;
 
-class InvoicesTest extends TestCase
+class PurchasesTest extends TestCase
 {
 
     use GuzzleMocker;
@@ -13,7 +13,7 @@ class InvoicesTest extends TestCase
     /**
      * @test
      */
-    public function invoices()
+    public function purchases()
     {
         $mock = $this->guzzleMock('GET', [
             'data' => [
@@ -22,7 +22,7 @@ class InvoicesTest extends TestCase
             ],
         ]);
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->invoices();
+        $response = $billit->purchases();
         $this->assertEquals(2, sizeof($response->data));
         $this->assertEquals(1, $response->data[0]->id);
     }
@@ -30,33 +30,23 @@ class InvoicesTest extends TestCase
     /**
      * @test
      */
-    public function create_invoice()
+    public function create_purchase()
     {
         $mock = $this->guzzleMock('POST', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->invoiceCreate(['id' => 1, 'inCharge' => 'tester1']);
+        $response = $billit->purchaseCreate(['id' => 1, 'inCharge' => 'tester1']);
         $this->assertEquals(1, $response->data->id);
     }
+
 
     /**
      * @test
      */
-    public function update_invoice()
-    {
-        $mock = $this->guzzleMock('PUT', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
-        $billit = new Billit('randomtoken', $mock);
-        $response = $billit->invoiceUpdate(123,['id' => 1, 'inCharge' => 'tester2']);
-        $this->assertEquals(1, $response->data->id);
-    }
-
-    /**
-     * @test
-     */
-    public function show_invoice()
+    public function show_purchase()
     {
         $mock = $this->guzzleMock('get', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->invoiceShow(123);
+        $response = $billit->purchaseShow(123);
         $this->assertEquals(1, $response->data->id);
     }
 
@@ -64,11 +54,11 @@ class InvoicesTest extends TestCase
     /**
      * @test
      */
-    public function delete_invoice()
+    public function delete_purchase()
     {
         $mock = $this->guzzleMock('DELETE');
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->invoiceDelete(123);
+        $response = $billit->purchaseDelete(123);
         $this->assertEmpty($response);
     }
 

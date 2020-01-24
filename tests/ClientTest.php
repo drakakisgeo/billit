@@ -4,13 +4,12 @@ namespace Drakakisgeo\Billit\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Drakakisgeo\Billit\Billit;
-use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Client;
-use Mockery;
 
 class ClientTest extends TestCase
 {
 
+    use GuzzleMocker;
 
     /**
      * @test
@@ -24,7 +23,7 @@ class ClientTest extends TestCase
     /**
      * @test
      */
-    public function requires_token_to_work()
+    public function token_is_required()
     {
         $billit = new Billit('', new Client($this->guzzleOptions()));
         $this->expectExceptionMessage("You need to provide an API token");
@@ -36,25 +35,23 @@ class ClientTest extends TestCase
      */
     public function it_welcomes_you()
     {
-        $mock = Mockery::mock(Client::class,function($mock){
-            $mock->shouldReceive('get')->once()->andReturn(new Response(200, [], json_encode(['msg' => "Hello from the Billit API"])));
-        });
+        $mock = $this->guzzleMock('GET', ['msg' => "Hello from the Billit API"]);
         $billit = new Billit('randomtoken', $mock);
         $this->assertEquals("Hello from the Billit API", $billit->welcome()->msg);
     }
 
-    private function guzzleOptions(): array
+    /**
+     * @test
+     */
+    public function client_returns_exceptions()
     {
-        return [
-            'base_uri' => 'http://api.billit.local',
-            'verify' => false,
-            'timeout' => 2.0,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-type' => 'application/json'
-            ]
-        ];
+        $mock = $this->guzzleMock('DELETE', [
+            "statusCode" => 401,
+            "error" => "Not authorized"
+        ], 401);
+        $billit = new Billit('randomtoken', $mock);
+        $response = $billit->customerDelete(123);
+        $this->assertEquals(401, $response->statusCode);
     }
-
 
 }

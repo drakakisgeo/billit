@@ -5,7 +5,7 @@ namespace Drakakisgeo\Billit\Tests;
 use Drakakisgeo\Billit\Billit;
 use PHPUnit\Framework\TestCase;
 
-class ResourceTest extends TestCase
+class CustomersTest extends TestCase
 {
 
     use GuzzleMocker;

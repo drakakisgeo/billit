@@ -5,7 +5,7 @@ namespace Drakakisgeo\Billit\Tests;
 use Drakakisgeo\Billit\Billit;
 use PHPUnit\Framework\TestCase;
 
-class CustomersTest extends TestCase
+class InvoicesTest extends TestCase
 {
 
     use GuzzleMocker;
@@ -13,7 +13,7 @@ class CustomersTest extends TestCase
     /**
      * @test
      */
-    public function customers()
+    public function invoices()
     {
         $mock = $this->guzzleMock('GET', [
             'data' => [
@@ -22,7 +22,7 @@ class CustomersTest extends TestCase
             ],
         ]);
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->customers();
+        $response = $billit->invoices();
         $this->assertEquals(2, sizeof($response->data));
         $this->assertEquals(1, $response->data[0]->id);
     }
@@ -30,33 +30,33 @@ class CustomersTest extends TestCase
     /**
      * @test
      */
-    public function create_customer()
+    public function create_invoice()
     {
         $mock = $this->guzzleMock('POST', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->customerCreate(['id' => 1, 'inCharge' => 'tester1']);
+        $response = $billit->invoiceCreate(['id' => 1, 'inCharge' => 'tester1']);
         $this->assertEquals(1, $response->data->id);
     }
 
     /**
      * @test
      */
-    public function update_customer()
+    public function update_invoice()
     {
         $mock = $this->guzzleMock('PUT', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->customerUpdate(123,['id' => 1, 'inCharge' => 'tester2']);
+        $response = $billit->invoiceUpdate("123-32123-123123-123123",['id' => 1, 'inCharge' => 'tester2']);
         $this->assertEquals(1, $response->data->id);
     }
 
     /**
      * @test
      */
-    public function show_customer()
+    public function show_invoice()
     {
         $mock = $this->guzzleMock('get', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->customerShow(123);
+        $response = $billit->invoiceShow("123-32123-123123-123123");
         $this->assertEquals(1, $response->data->id);
     }
 
@@ -64,11 +64,11 @@ class CustomersTest extends TestCase
     /**
      * @test
      */
-    public function delete_customer()
+    public function delete_invoice()
     {
         $mock = $this->guzzleMock('DELETE');
         $billit = new Billit('randomtoken', $mock);
-        $response = $billit->customerDelete(123);
+        $response = $billit->invoiceDelete("123-32123-123123-123123");
         $this->assertEmpty($response);
     }
 
