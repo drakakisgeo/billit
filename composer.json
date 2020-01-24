@@ -26,5 +26,15 @@
     "phpunit/phpunit": "^8.5",
     "mockery/mockery": "^1.3",
     "orchestra/testbench": "^4.5"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Drakakisgeo\\Billit\\BillitServiceProvider"
+      ],
+      "alias": {
+        "Billit": "Drakakisgeo\\Billit\\Facade"
+      }
+    }
   }
 }
