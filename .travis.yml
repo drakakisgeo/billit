@@ -6,6 +6,6 @@
   ],
   "script": "vendor/bin/phpunit",
   "group": "stable",
-  "dist": "precise",
+  "dist": "xenial",
   "os": "linux"
 }

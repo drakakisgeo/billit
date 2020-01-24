@@ -4,9 +4,9 @@
 [![Software License][ico-license]](LICENSE.md)
 [![Build Status][ico-travis]][link-travis]
 
-The goal is to make the [billit.io API](https://www.billit.io/docs) even easier to work with if you are a PHP developer. Check the examples how easy it is to work with this client and update your resources in your billit account.
+This PHP client can be used to connect with the [billit.io API](https://www.billit.io/docs) . Check the examples how easy it is to work with this client and update your resources in your billit account.
 
-Note: Billit.io also has an integration with zapier.com, Contact me in order to give you access to our beta zapier app.
+*Note: Billit.io also has an integration with zapier.com, Contact me in order to give you access to our beta zapier app.*
 
 ## Install
 
