@@ -21,7 +21,8 @@ If you use the Laravel Framework you need to provide your Billit API key and Bas
 ``` php
 'billit' => [
         'token' => env('BILLIT_API_TOKEN'),
-        'baseUrl' => env('BILLIT_API_BASEURL')
+        'sandbox' => env('BILLIT_API_IS_SANDBOX'),
+        'version' => 'v1'
     ]
 ```
 To initialize the client is just a call as this:

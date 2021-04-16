@@ -21,7 +21,7 @@ class SuppliersTest extends TestCase
                 ['id' => 2, 'inCharge' => 'tester2']
             ],
         ]);
-        $billit = new Billit('randomtoken', $mock);
+        $billit = new Billit('randomtoken',false,'v1', $mock);
         $response = $billit->suppliers();
         $this->assertEquals(2, sizeof($response->data));
         $this->assertEquals(1, $response->data[0]->id);
@@ -34,7 +34,7 @@ class SuppliersTest extends TestCase
     public function show_supplier()
     {
         $mock = $this->guzzleMock('get', ['data' => ['id' => 1, 'inCharge' => 'tester1']]);
-        $billit = new Billit('randomtoken', $mock);
+        $billit = new Billit('randomtoken',false,'v1', $mock);
         $response = $billit->supplierShow(123);
         $this->assertEquals(1, $response->data->id);
     }
@@ -46,7 +46,7 @@ class SuppliersTest extends TestCase
     public function delete_supplier()
     {
         $mock = $this->guzzleMock('DELETE');
-        $billit = new Billit('randomtoken', $mock);
+        $billit = new Billit('randomtoken',false,'v1', $mock);
         $response = $billit->supplierDelete(123);
         $this->assertEmpty($response);
     }
