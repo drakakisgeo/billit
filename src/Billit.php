@@ -21,9 +21,9 @@ class Billit
      * @param string $token
      * @param Client|null $client
      */
-    public function __construct(string $token, Client $client)
+    public function __construct(string $token, Client $client, $sandbox = false)
     {
-        $this->client = $client ?: $this->defaultClient();
+        $this->client = $client ?: $this->defaultClient($sandbox);
         $this->token = $token;
     }
 
@@ -355,11 +355,11 @@ class Billit
     }
 
 
-    private function defaultClient(): Client
+    private function defaultClient($sandbox = false): Client
     {
         return new Client([
             [
-                'base_uri' => 'https://api.billit.io',
+                'base_uri' => $sandbox ? 'https://api.sandbox-billit.xyz' : 'https://api.billit.io',
                 'timeout' => 2.0,
                 'headers' => [
                     'Accept' => 'application/json',
