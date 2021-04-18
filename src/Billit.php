@@ -2,6 +2,7 @@
 
 namespace Drakakisgeo\Billit;
 
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Response;
 use stdClass;
 use Exception;
@@ -25,10 +26,10 @@ class Billit
      */
     public function __construct(string $token, $sandbox = false, $version = 'v1', Client $client = null)
     {
-        $this->client = $client ?: $this->defaultClient();
         $this->token = $token;
         $this->sandbox = $sandbox;
         $this->version = $version;
+        $this->client = $client ?: $this->defaultClient();
     }
 
     public function welcome()
@@ -362,13 +363,11 @@ class Billit
     private function defaultClient(): Client
     {
         return new Client([
-            [
-                'base_uri' => $this->sandbox ? "https://api.sandbox-billit.xyz/{$this->version}" : "https://api.billit.io/{$this->version}",
-                'timeout' => 2.0,
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Content-type' => 'application/json'
-                ]
+            'base_uri' => $this->sandbox ? "https://api.sandbox-billit.xyz/{$this->version}" : "https://api.billit.io/{$this->version}",
+            'timeout' => 2.0,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-type' => 'application/json'
             ]
         ]);
     }
