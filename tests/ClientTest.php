@@ -16,7 +16,7 @@ class ClientTest extends TestCase
      */
     public function it_can_be_instantiated()
     {
-        $billit = new Billit('token', new Client());
+        $billit = new Billit('token', false,'v1',new Client());
         $this->assertInstanceOf(Billit::class, $billit);
     }
 
@@ -25,7 +25,7 @@ class ClientTest extends TestCase
      */
     public function token_is_required()
     {
-        $billit = new Billit('', new Client($this->guzzleOptions()));
+        $billit = new Billit('', false,'v1',new Client($this->guzzleOptions()));
         $this->expectExceptionMessage("You need to provide an API token");
         $billit->welcome();
     }
@@ -36,7 +36,7 @@ class ClientTest extends TestCase
     public function it_welcomes_you()
     {
         $mock = $this->guzzleMock('GET', ['msg' => "Hello from the Billit API"]);
-        $billit = new Billit('randomtoken', $mock);
+        $billit = new Billit('randomtoken', false,'v1',$mock);
         $this->assertEquals("Hello from the Billit API", $billit->welcome()->msg);
     }
 
@@ -49,7 +49,7 @@ class ClientTest extends TestCase
             "statusCode" => 401,
             "error" => "Not authorized"
         ], 401);
-        $billit = new Billit('randomtoken', $mock);
+        $billit = new Billit('randomtoken', false,'v1', $mock);
         $response = $billit->customerDelete(123);
         $this->assertEquals(401, $response->statusCode);
     }
