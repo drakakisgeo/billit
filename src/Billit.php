@@ -34,7 +34,7 @@ class Billit
 
     public function welcome()
     {
-        return $this->touch('get', '/');
+        return $this->touch('get', '');
     }
 
     /**
@@ -363,7 +363,7 @@ class Billit
     private function defaultClient(): Client
     {
         return new Client([
-            'base_uri' => $this->sandbox ? "https://api.sandbox-billit.xyz/{$this->version}" : "https://api.billit.io/{$this->version}",
+            'base_uri' => $this->sandbox ? "https://api.sandbox-billit.xyz/{$this->version}/" : "https://api.billit.io/{$this->version}/",
             'timeout' => 2.0,
             'headers' => [
                 'Accept' => 'application/json',

@@ -20,7 +20,7 @@ class BillitServiceProvider extends ServiceProvider
             $isSandbox = $app['config']['services']['billit']['sandbox'];
             $version = $app['config']['services']['billit']['version'];
             return new Billit($token, $isSandbox, $version, new Client([
-                'base_uri' => $isSandbox ? "https://api.sandbox-billit.xyz/{$version}" : "https://api.billit.io/{$version}",
+                'base_uri' => $isSandbox ? "https://api.sandbox-billit.xyz/{$version}/" : "https://api.billit.io/{$version}/",
                 'timeout' => 2.0,
                 'headers' => [
                     'Accept' => 'application/json',
