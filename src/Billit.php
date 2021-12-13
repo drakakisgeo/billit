@@ -364,7 +364,7 @@ class Billit
     {
         return new Client([
             'base_uri' => $this->sandbox ? "https://api.sandbox-billit.xyz/{$this->version}/" : "https://api.billit.io/{$this->version}/",
-            'timeout' => 2.0,
+            'timeout' => 5.0,
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-type' => 'application/json'
