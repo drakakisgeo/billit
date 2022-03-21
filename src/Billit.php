@@ -335,6 +335,43 @@ class Billit
         return $this->touch('delete', "suppliers/{$resourceId}");
     }
 
+    /**
+     * @param array|null $params
+     * @return stdClass
+     * @throws Exception
+     */
+    public function contacts(array $params = null)
+    {
+        return $this->touch('get', 'contacts', $params);
+    }
+
+    /**
+     * @param int $resourceId
+     * @return stdClass
+     */
+    public function contactShow(int $resourceId): stdClass
+    {
+        return $this->touch('get', "contacts/{$resourceId}");
+    }
+
+    /**
+     * @param array $payload
+     * @return stdClass
+     * @throws Exception
+     */
+    public function contactCreate(array $payload): stdClass
+    {
+        return $this->touch('post', 'contacts', $payload);
+    }
+
+    /**
+     * @param int $resourceId
+     * @throws Exception
+     */
+    public function contactDelete(int $resourceId)
+    {
+        return $this->touch('delete', "contacts/{$resourceId}");
+    }
 
     /**
      * @param string $action
