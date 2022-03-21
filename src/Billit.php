@@ -317,6 +317,16 @@ class Billit
     }
 
     /**
+     * @param array $payload
+     * @return stdClass
+     * @throws Exception
+     */
+    public function supplierCreate(array $payload): stdClass
+    {
+        return $this->touch('post', 'suppliers', $payload);
+    }
+
+    /**
      * @param int $resourceId
      * @throws Exception
      */
