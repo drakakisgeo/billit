@@ -38,13 +38,13 @@ Billit::myAccount();
 ```
 
 ## Examples
-##### List customers
+##### List contacts
 
 ``` php
 use Drakakisgeo\Billit\Billit;
 
 $client = new Billit('yourToken');
-$client->customers();
+$client->contacts();
 ```
 
 ##### Get Account details
@@ -56,13 +56,13 @@ $client->myAccount();
 ##### Get Customers
 
 ``` php
-$client->customers();
+$client->contacts();
 ```
 
-##### Create customer
+##### Create contact
 
 ``` php
-$client->customerCreate([
+$client->contactCreate([
     'customerType' => 'company',
     'company' => 'Awesome S.A.',
     'inCharge' => 'Kalampakopoulos George',
@@ -71,10 +71,10 @@ $client->customerCreate([
 ]);
 ```
 
-##### Update customer
+##### Update contact
 
 ``` php
-$client->customerUpdate([
+$client->contactUpdate([
     'customerType' => 'company',
     'company' => 'Awesome S.A.',
     'inCharge' => 'Kalampakopoulos George',
@@ -83,16 +83,16 @@ $client->customerUpdate([
 ]);
 ```
 
-##### Get customer
+##### Get contact
 
 ``` php
-$client->customerShow(1010);
+$client->contactShow(1010);
 ```
 
-##### Delete customer
+##### Delete contact
 
 ``` php
-$client->customerDelete(1010);
+$client->contactDelete(1010);
 ```
 
 ##### Create invoice

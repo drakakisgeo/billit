@@ -54,9 +54,9 @@ class Billit
      * @return stdClass
      * @throws Exception
      */
-    public function customers(array $params = null)
+    public function contacts(array $params = null)
     {
-        return $this->touch('get', 'customers', $params);
+        return $this->touch('get', 'contacts', $params);
     }
 
 
@@ -65,9 +65,9 @@ class Billit
      * @return stdClass
      * @throws Exception
      */
-    public function customerCreate(array $payload): stdClass
+    public function contactCreate(array $payload): stdClass
     {
-        return $this->touch('post', 'customers', $payload);
+        return $this->touch('post', 'contacts', $payload);
     }
 
 
@@ -76,27 +76,27 @@ class Billit
      * @param array $payload
      * @return stdClass
      */
-    public function customerUpdate(int $resourceId, array $payload): stdClass
+    public function contactUpdate(int $resourceId, array $payload): stdClass
     {
-        return $this->touch('put', "customers/{$resourceId}", $payload);
+        return $this->touch('put', "contacts/{$resourceId}", $payload);
     }
 
     /**
      * @param int $resourceId
      * @return stdClass
      */
-    public function customerShow(int $resourceId): stdClass
+    public function contactShow(int $resourceId): stdClass
     {
-        return $this->touch('get', "customers/{$resourceId}");
+        return $this->touch('get', "contacts/{$resourceId}");
     }
 
     /**
      * @param int $resourceId
      * @throws Exception
      */
-    public function customerDelete(int $resourceId)
+    public function contactDelete(int $resourceId)
     {
-        return $this->touch('delete', "customers/{$resourceId}");
+        return $this->touch('delete', "contacts/{$resourceId}");
     }
 
     /**
