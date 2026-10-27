@@ -1,150 +1,235 @@
 # Billit client
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
+[![Tests][ico-tests]][link-tests]
 [![Software License][ico-license]](LICENSE.md)
-[![Build Status][ico-travis]][link-travis]
 
-This PHP client can be used to connect with the [billit.io API](https://www.billit.io/docs) .
+The PHP client for the [billit.io API](https://billit.io/apidocs/introduction), with first-class Laravel support.
+Create MyData (A.A.D.E.) compatible invoices, manage contacts, products, payments, purchases, tags and
+One Click Payment links, and look up Greek companies by VAT id.
 
-*Note: Billit.io also has an integration with zapier.com, Contact us in order to give you access to our beta zapier app.*
+## Requirements
+
+- PHP 8.2 or newer
+- Guzzle 7.9 or newer
+- Laravel 12 or 13 (optional, for the service provider and facade)
+
+Upgrading from 2.x? See [UPGRADE.md](UPGRADE.md).
 
 ## Install
 
-### Via Composer
-
-``` bash
-$ composer require drakakisgeo/billit
+```bash
+composer require drakakisgeo/billit
 ```
 
-### Laravel Framework
-If you use the Laravel Framework you need to provide your Billit API key and Base url, so add a key to your config/services.php file as:
-``` php
-'billit' => [
-        'token' => env('BILLIT_API_TOKEN'),
-        'sandbox' => env('BILLIT_API_IS_SANDBOX'),
-        'version' => 'v1',
-        'timeout' => 2.0
-    ]
-```
-To initialize the client is just a call as this:
+## Getting a token
 
-``` php
-$client = resolve('billit');
-```
-You can of course also use the Billit Facade like so
+Register for a [Sandbox account](https://app.sandbox-billit.xyz), go to **Settings > API** and generate a token.
+Build and test against the sandbox first. Production tokens are read only until you contact Billit for full access.
+Sandbox data is wiped every month.
 
-``` php
-Billit::myAccount();
-```
+## Usage
 
-## Examples
-##### List contacts
+### Plain PHP
 
-``` php
+```php
 use Drakakisgeo\Billit\Billit;
 
-$client = new Billit('yourToken');
-$client->contacts();
+$billit = new Billit('your-token', sandbox: true);
+
+$billit->welcome(); // { "msg": "Hello from the Billit API" }
 ```
 
-##### Get Account details
+The default HTTP client uses a 10 second request timeout and a 5 second connect timeout. To change them, or to add
+your own Guzzle middleware, pass a client:
 
-``` php
-$client->myAccount();
+```php
+$billit = new Billit('your-token', sandbox: true, client: Billit::httpClient(sandbox: true, timeout: 30));
 ```
 
-##### Get Customers
+### Laravel
 
-``` php
-$client->contacts();
+The service provider and the `Billit` facade are auto-discovered. Add the credentials to `config/services.php`:
+
+```php
+'billit' => [
+    'token' => env('BILLIT_API_TOKEN'),
+    'sandbox' => env('BILLIT_API_IS_SANDBOX', false),
+    'version' => 'v1',
+    'timeout' => 10,          // seconds, optional
+    'connect_timeout' => 5,   // seconds, optional
+],
 ```
 
-##### Create contact
+Then inject it, resolve it, or use the facade:
 
-``` php
-$client->contactCreate([
-    'customerType' => 'company',
+```php
+use Drakakisgeo\Billit\Billit;
+
+public function __construct(private Billit $billit) {}
+
+$billit = app(Billit::class);
+
+\Billit::myAccount();
+```
+
+## Responses
+
+Every method returns the decoded JSON as a `stdClass`. Single resources live under `data`, and lists add
+`links` and `meta` for pagination. Successful `DELETE` calls return an empty object.
+
+## Errors
+
+API and network failures throw an exception that extends `Drakakisgeo\Billit\Exceptions\BillitException`:
+
+| Exception | When |
+|---|---|
+| `ValidationException` | 400 / 422. Use `errors()` to get the field errors |
+| `AuthenticationException` | 401 / 403. The token is missing, invalid or read only |
+| `NotFoundException` | 404 |
+| `RateLimitException` | 429. The API allows 60 requests per minute. Use `retryAfter()` when the API sends it |
+| `ServerException` | 5xx |
+| `ConnectionException` | DNS failure, refused connection or timeout |
+| `BillitException` | Anything else, including an invalid JSON response |
+
+Every exception has `getStatusCode()` and `getResponseBody()`.
+
+```php
+use Drakakisgeo\Billit\Exceptions\BillitException;
+use Drakakisgeo\Billit\Exceptions\ValidationException;
+
+try {
+    $invoice = $billit->invoiceCreate($payload);
+} catch (ValidationException $e) {
+    $e->errors(); // ['customerId' => ['The customer id field is required.']]
+} catch (BillitException $e) {
+    report($e);
+}
+```
+
+## Endpoints
+
+| Resource | Methods |
+|---|---|
+| Account | `myAccount()` (cached per instance) |
+| Contacts (customers & suppliers) | `contacts($params)`, `contactCreate($payload)`, `contactShow($id)`, `contactUpdate($id, $payload)`, `contactDelete($id)` |
+| Invoices | `invoices($params)`, `invoiceCreate($payload)`, `invoiceShow($uuid)`, `invoiceUpdate($uuid, $payload)`, `invoiceDelete($uuid)`, `alpSignature($payload)` |
+| Products | `products($params)`, `productCreate($payload)`, `productShow($id)`, `productUpdate($id, $payload)`, `productDelete($id)` |
+| One Click Payment links | `ocps($params)`, `ocpCreate($payload)`, `ocpShow($uuid)`, `ocpUpdate($uuid, $payload)`, `ocpDelete($uuid)` |
+| Payments | `payments($params)`, `paymentCreate($payload)`, `paymentDelete($id)` |
+| Purchases | `purchases($params)`, `purchaseCreate($payload)`, `purchaseShow($id)`, `purchaseDelete($id)` |
+| Tags | `tags($params)`, `tagShow($id)`, `tagDelete($id)` |
+| GSIS VAT lookup | `gsis($vatId)` |
+
+List methods send `$params` as query string filters. All lists accept `per_page` (default 25, max 250) and `page`.
+See the [API reference](https://billit.io/apidocs/api/account) for each resource's fields and filters.
+
+## Examples
+
+### The account
+
+The account response contains the biller, payment method and VAT ids you need when creating invoices. It rarely
+changes, so it is safe to cache.
+
+```php
+$account = $billit->myAccount();
+```
+
+### Contacts
+
+```php
+$billit->contacts(['q' => 'Awesome', 'unpaid' => 1, 'per_page' => 100]);
+
+$billit->contactCreate([
+    'isCompany' => true,
     'company' => 'Awesome S.A.',
+    'customerType' => 1, // 1 customer, 2 supplier, 3 both
+    'country' => 'GR',
     'inCharge' => 'Kalampakopoulos George',
     'lang' => 'el',
-    'VatId'=>'075101010'
+    'vatId' => 'EL075101010',
 ]);
+
+$billit->contactUpdate(1010, ['inCharge' => 'Papadopoulos Maria']);
+$billit->contactShow(1010);
+$billit->contactDelete(1010);
 ```
 
-##### Update contact
+### Create an invoice (MyData enabled)
 
-``` php
-$client->contactUpdate([
-    'customerType' => 'company',
-    'company' => 'Awesome S.A.',
-    'inCharge' => 'Kalampakopoulos George',
-    'lang' => 'el',
-    'VatId'=>'075101010'
-]);
-```
-
-##### Get contact
-
-``` php
-$client->contactShow(1010);
-```
-
-##### Delete contact
-
-``` php
-$client->contactDelete(1010);
-```
-
-##### Create invoice
-A full rather complicated example, MyData enabled
-
-``` php
-$client->invoiceCreate([
-    "customerId"=>694,
-    "sendMail"=> false,
-    "excludeMydata"=> true,
-    "invoiceDate"=>"2021-04-15",
-    "invoiceTypeId"=>349,
-    "isPaid" => true,
-    "mydataInvoiceType" => "2.1",
-    "taxes"=> [
+```php
+$billit->invoiceCreate([
+    'customerId' => 694,
+    'sendMail' => false,
+    'excludeMydata' => false,
+    'invoiceDate' => '2026-04-15',
+    'invoiceTypeId' => 349,
+    'isPaid' => true,
+    'mydataInvoiceType' => '2.1',
+    'taxes' => [
+        ['taxId' => 514],
+        ['taxId' => 524, 'taxVatShow' => 1],
+    ],
+    'products' => [
         [
-            "taxId"=> 514
+            'productId' => null,
+            'details' => 'Consulting',
+            'measurementUnit' => 1,
+            'vatId' => 376,
+            'price' => 123.32,
+            'quantity' => 1,
+            'incomeClassificationCat' => 'category1_3',
+            'incomeClassificationType' => 'E3_561_001',
         ],
-        [
-            "taxId"=> 524,
-            "taxVatShow"=> 1
-        ]
     ],
-    "products"=> [
-        [
-            "productId"=> null,
-            "details"=> "test",
-            "measurementUnit"=> 1,
-            "vatId" => 376,
-            "price" => 123.32,
-            "quantity"=> 1,
-            "incomeClassificationCat"=>"category1_3",
-            "incomeClassificationType"=>"E3_561_001"
-        ]
+    'tags' => ['billit', 'test-tag'],
+    'mydataPayment' => [
+        'paidAmount' => 0.32,
+        'paymentMethod' => 3,
+        'epiPistosi' => 10,
     ],
-    "tags" => ["billit","test-tag"],
-    "mydataPayment"=>[
-        "paidAmount"=> 0.32,
-        "paymentMethod"=> 3,
-        "epiPistosi"=> 10
-    ]
-]
-);
+]);
 ```
 
-Check the rest of the methods to src/Billit.php and the [official API](https://billit.io/docs) regarding the options that can be used in each case.
+### One Click Payment link
 
+You need an online payment method set up in the Billit app first. Use that provider's sandbox account while testing.
 
+```php
+$ocp = $billit->ocpCreate([
+    'title' => 'Annual subscription',
+    'cost' => 124.00,
+    'netValue' => 100.00,
+    'vatId' => 376,
+    'invoiceTypeId' => 349,
+    'paymentMethodId' => 12,
+    'lang' => 'el',
+    'expirationAt' => '2026-12-31',
+]);
+```
+
+### Look up a company by VAT id
+
+Enable GSIS in your Billit settings first.
+
+```php
+$company = $billit->gsis('094014201');
+```
+
+## Testing
+
+```bash
+composer test
+composer analyse
+```
+
+## Security
+
+Please report vulnerabilities as described in [SECURITY.md](SECURITY.md), not in public issues.
 
 ## Contributing
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) and [CONDUCT](CONDUCT.md) for details.
+Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## Credits
 
@@ -157,8 +242,8 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 [ico-version]: https://img.shields.io/packagist/v/drakakisgeo/billit.svg?style=flat-square
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/drakakisgeo/billit/master.svg?style=flat-square
+[ico-tests]: https://img.shields.io/github/actions/workflow/status/drakakisgeo/billit/tests.yml?branch=master&style=flat-square&label=tests
 [link-packagist]: https://packagist.org/packages/drakakisgeo/billit
-[link-travis]: https://travis-ci.org/drakakisgeo/billit
+[link-tests]: https://github.com/drakakisgeo/billit/actions/workflows/tests.yml
 [link-author]: https://github.com/drakakisgeo
 [link-contributors]: ../../contributors

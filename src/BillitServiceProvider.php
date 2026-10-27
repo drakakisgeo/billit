@@ -2,32 +2,41 @@
 
 namespace Drakakisgeo\Billit;
 
-use GuzzleHttp\Client;
+use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
 
-class BillitServiceProvider extends ServiceProvider
+class BillitServiceProvider extends ServiceProvider implements DeferrableProvider
 {
-
-    public function boot()
+    public function register(): void
     {
+        $this->app->singleton(Billit::class, function (Application $app) {
+            $config = (array) $app->make(Repository::class)->get('services.billit', []);
+            $sandbox = filter_var($config['sandbox'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $version = $config['version'] ?? 'v1';
 
-    }
-
-    public function register()
-    {
-        $this->app->bind('billit', function ($app) {
-            $token = $app['config']['services']['billit']['token'];
-            $isSandbox = $app['config']['services']['billit']['sandbox'];
-            $version = $app['config']['services']['billit']['version'];
-            return new Billit($token, $isSandbox, $version, new Client([
-                'base_uri' => $isSandbox ? "https://api.sandbox-billit.xyz/{$version}/" : "https://api.billit.io/{$version}/",
-                'timeout' => isset($app['config']['services']['billit']['timeout']) ? $app['config']['services']['billit']['timeout'] : 2.0,
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Content-type' => 'application/json'
-                ]
-            ]));
+            return new Billit(
+                (string) ($config['token'] ?? ''),
+                $sandbox,
+                $version,
+                Billit::httpClient(
+                    $sandbox,
+                    $version,
+                    (float) ($config['timeout'] ?? Billit::DEFAULT_TIMEOUT),
+                    (float) ($config['connect_timeout'] ?? Billit::DEFAULT_CONNECT_TIMEOUT),
+                ),
+            );
         });
+
+        $this->app->alias(Billit::class, 'billit');
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public function provides(): array
+    {
+        return [Billit::class, 'billit'];
+    }
 }
