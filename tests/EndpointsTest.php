@@ -22,6 +22,7 @@ class EndpointsTest extends TestCase
             'contacts' => ['contacts', [], 'GET', '/v1/contacts'],
             'contactCreate' => ['contactCreate', [self::PAYLOAD], 'POST', '/v1/contacts', self::PAYLOAD],
             'contactUpdate' => ['contactUpdate', [7, self::PAYLOAD], 'PUT', '/v1/contacts/7', self::PAYLOAD],
+            'contactPatch' => ['contactPatch', [7, self::PAYLOAD], 'PATCH', '/v1/contacts/7', self::PAYLOAD],
             'contactShow' => ['contactShow', [7], 'GET', '/v1/contacts/7'],
             'contactDelete' => ['contactDelete', [7], 'DELETE', '/v1/contacts/7'],
             'invoices' => ['invoices', [], 'GET', '/v1/invoices'],
@@ -80,6 +81,18 @@ class EndpointsTest extends TestCase
 
         $this->assertSame('q=Testing%20S.A.&tagid=24&per_page=250', $this->lastRequest()->getUri()->getQuery());
         $this->assertSame('', (string) $this->lastRequest()->getBody());
+    }
+
+    #[Test]
+    public function patch_sends_a_json_body_and_no_query_string(): void
+    {
+        $billit = $this->billit($this->json(['data' => ['id' => 7]]));
+
+        $billit->contactPatch(7, ['inCharge' => 'Papadopoulos Maria']);
+
+        $this->assertSame('', $this->lastRequest()->getUri()->getQuery());
+        $this->assertSame('application/json', $this->lastRequest()->getHeaderLine('Content-Type'));
+        $this->assertSame(['inCharge' => 'Papadopoulos Maria'], $this->lastJsonBody());
     }
 
     #[Test]

@@ -35,4 +35,14 @@ class BillitException extends RuntimeException
     {
         return $this->responseBody;
     }
+
+    /**
+     * The id the API logged an unexpected error under (`data.insidentId`), to quote when contacting Billit support.
+     */
+    public function incidentId(): ?string
+    {
+        $id = $this->responseBody?->data->insidentId ?? null;
+
+        return is_string($id) && $id !== '' ? $id : null;
+    }
 }

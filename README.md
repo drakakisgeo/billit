@@ -85,14 +85,16 @@ API and network failures throw an exception that extends `Drakakisgeo\Billit\Exc
 | Exception | When |
 |---|---|
 | `ValidationException` | 400 / 422. Use `errors()` to get the field errors |
-| `AuthenticationException` | 401 / 403. The token is missing, invalid or read only |
+| `AuthenticationException` | 401 / 403. The token is missing, invalid, lacks the `read`/`write` ability, or writes aren't approved in production yet |
 | `NotFoundException` | 404 |
+| `ConflictException` | 409. An invoice update sent `loaded_at` and the invoice changed since. Read it again and retry |
 | `RateLimitException` | 429. The API allows 60 requests per minute. Use `retryAfter()` when the API sends it |
 | `ServerException` | 5xx |
 | `ConnectionException` | DNS failure, refused connection or timeout |
 | `BillitException` | Anything else, including an invalid JSON response |
 
-Every exception has `getStatusCode()` and `getResponseBody()`.
+Every exception has `getStatusCode()` and `getResponseBody()`. For errors the API logged, `incidentId()` returns the
+id to quote to Billit support.
 
 ```php
 use Drakakisgeo\Billit\Exceptions\BillitException;
@@ -112,16 +114,20 @@ try {
 | Resource | Methods |
 |---|---|
 | Account | `myAccount()` (cached per instance) |
-| Contacts (customers & suppliers) | `contacts($params)`, `contactCreate($payload)`, `contactShow($id)`, `contactUpdate($id, $payload)`, `contactDelete($id)` |
+| Contacts (customers & suppliers) | `contacts($params)`, `contactCreate($payload)`, `contactShow($id)`, `contactUpdate($id, $payload)`, `contactPatch($id, $payload)`, `contactDelete($id)` |
 | Invoices | `invoices($params)`, `invoiceCreate($payload)`, `invoiceShow($uuid)`, `invoiceUpdate($uuid, $payload)`, `invoiceDelete($uuid)`, `alpSignature($payload)` |
 | Products | `products($params)`, `productCreate($payload)`, `productShow($id)`, `productUpdate($id, $payload)`, `productDelete($id)` |
 | One Click Payment links | `ocps($params)`, `ocpCreate($payload)`, `ocpShow($uuid)`, `ocpUpdate($uuid, $payload)`, `ocpDelete($uuid)` |
-| Payments | `payments($params)`, `paymentCreate($payload)`, `paymentDelete($id)` |
+| Payments | `payments($params)`, `paymentCreate($payload)` (`paymentDelete($id)` is deprecated) |
 | Purchases | `purchases($params)`, `purchaseCreate($payload)`, `purchaseShow($id)`, `purchaseDelete($id)` |
 | Tags | `tags($params)`, `tagShow($id)`, `tagDelete($id)` |
 | GSIS VAT lookup | `gsis($vatId)` |
 
-List methods send `$params` as query string filters. All lists accept `per_page` (default 25, max 250) and `page`.
+List methods send `$params` as query string filters. All lists accept `per_page` (max 250) and `page`. The default page
+size is 25 for invoices and contacts, 50 for products, 20 for payments, purchases and tags, and 15 for OCP links.
+
+The `*Update()` methods use `PUT`, which replaces the whole resource: fields you leave out are cleared, not kept.
+Read the resource first and send it back complete, or use `contactPatch()` to change only some fields of a contact.
 See the [API reference](https://billit.io/apidocs/api/account) for each resource's fields and filters.
 
 ## Examples
@@ -143,14 +149,17 @@ $billit->contacts(['q' => 'Awesome', 'unpaid' => 1, 'per_page' => 100]);
 $billit->contactCreate([
     'isCompany' => true,
     'company' => 'Awesome S.A.',
-    'customerType' => 1, // 1 customer, 2 supplier, 3 both
+    'customerType' => 1, // 1 domestic, 2 EU, 3 outside the EU
+    'contactType' => 1,  // 1 customer, 2 supplier, 3 both
     'country' => 'GR',
+    'city' => 'Athens',
+    'postalCode' => '10431',
     'inCharge' => 'Kalampakopoulos George',
     'lang' => 'el',
     'vatId' => 'EL075101010',
 ]);
 
-$billit->contactUpdate(1010, ['inCharge' => 'Papadopoulos Maria']);
+$billit->contactPatch(1010, ['inCharge' => 'Papadopoulos Maria']); // only this field changes
 $billit->contactShow(1010);
 $billit->contactDelete(1010);
 ```
@@ -161,7 +170,6 @@ $billit->contactDelete(1010);
 $billit->invoiceCreate([
     'customerId' => 694,
     'sendMail' => false,
-    'excludeMydata' => false,
     'invoiceDate' => '2026-04-15',
     'invoiceTypeId' => 349,
     'isPaid' => true,
@@ -189,6 +197,21 @@ $billit->invoiceCreate([
         'epiPistosi' => 10,
     ],
 ]);
+```
+
+### Update an invoice safely
+
+`invoiceUpdate()` replaces the invoice, so send it complete. Pass the `updatedAt` you read as `loaded_at` to make
+sure nobody changed it in the meantime:
+
+```php
+use Drakakisgeo\Billit\Exceptions\ConflictException;
+
+try {
+    $billit->invoiceUpdate($uuid, $payload + ['loaded_at' => $invoice->data->updatedAt]);
+} catch (ConflictException $e) {
+    // The invoice changed since you read it: read it again, then resend your update.
+}
 ```
 
 ### One Click Payment link

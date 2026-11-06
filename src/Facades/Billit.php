@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static \stdClass contacts(array<string, mixed> $params = [])
  * @method static \stdClass contactCreate(array<string, mixed> $payload)
  * @method static \stdClass contactUpdate(int $resourceId, array<string, mixed> $payload)
+ * @method static \stdClass contactPatch(int $resourceId, array<string, mixed> $payload)
  * @method static \stdClass contactShow(int $resourceId)
  * @method static \stdClass contactDelete(int $resourceId)
  * @method static \stdClass invoices(array<string, mixed> $params = [])

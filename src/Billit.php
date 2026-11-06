@@ -4,6 +4,7 @@ namespace Drakakisgeo\Billit;
 
 use Drakakisgeo\Billit\Exceptions\AuthenticationException;
 use Drakakisgeo\Billit\Exceptions\BillitException;
+use Drakakisgeo\Billit\Exceptions\ConflictException;
 use Drakakisgeo\Billit\Exceptions\ConnectionException;
 use Drakakisgeo\Billit\Exceptions\NotFoundException;
 use Drakakisgeo\Billit\Exceptions\RateLimitException;
@@ -106,7 +107,7 @@ class Billit
     /**
      * Customers and suppliers.
      *
-     * @param array<string, mixed> $params q, unpaid, tagid, withRelations, per_page, page
+     * @param array<string, mixed> $params q, unpaid, tagid, withRelations, per_page (max 250), page
      * @throws BillitException
      */
     public function contacts(array $params = []): stdClass
@@ -124,12 +125,26 @@ class Billit
     }
 
     /**
+     * Replace the whole contact (PUT). Fields you leave out are cleared or reset, not kept: tags are removed,
+     * contactType goes back to 1 (customer) and reminders are switched off. Use contactPatch() to change only some fields.
+     *
      * @param array<string, mixed> $payload
      * @throws BillitException
      */
     public function contactUpdate(int $resourceId, array $payload): stdClass
     {
         return $this->request('PUT', "contacts/{$resourceId}", $payload);
+    }
+
+    /**
+     * Partially update a contact (PATCH). Only the fields you send change.
+     *
+     * @param array<string, mixed> $payload
+     * @throws BillitException
+     */
+    public function contactPatch(int $resourceId, array $payload): stdClass
+    {
+        return $this->request('PATCH', "contacts/{$resourceId}", $payload);
     }
 
     /**
@@ -149,7 +164,9 @@ class Billit
     }
 
     /**
-     * @param array<string, mixed> $params withRelations, per_page, page
+     * @param array<string, mixed> $params per_page (max 250), page, sort (id, number, date_issued, created_at, updated_at),
+     *                                     dir (asc, desc), startdate, enddate, updated_at, contact_id, invcat, q, tagid,
+     *                                     unpaid, scheduled. Dates as Y-m-d
      * @throws BillitException
      */
     public function invoices(array $params = []): stdClass
@@ -167,7 +184,11 @@ class Billit
     }
 
     /**
+     * Replace the invoice (PUT). Send the whole invoice, as for invoiceCreate(): fields you leave out are cleared,
+     * not kept. Send `loaded_at` (the updatedAt you read) to get a ConflictException if it changed in the meantime.
+     *
      * @param array<string, mixed> $payload
+     * @throws ConflictException when `loaded_at` is sent and the invoice changed after it
      * @throws BillitException
      */
     public function invoiceUpdate(string $uuid, array $payload): stdClass
@@ -203,7 +224,7 @@ class Billit
     }
 
     /**
-     * @param array<string, mixed> $params has_stock, stock_less, stock_greater, tag_id, withRelations, per_page, page
+     * @param array<string, mixed> $params has_stock, stock_less, stock_greater, tag_id, per_page (max 250), page
      * @throws BillitException
      */
     public function products(array $params = []): stdClass
@@ -221,6 +242,8 @@ class Billit
     }
 
     /**
+     * Replace the product (PUT). Fields you leave out are cleared, not kept.
+     *
      * @param array<string, mixed> $payload
      * @throws BillitException
      */
@@ -248,7 +271,7 @@ class Billit
     /**
      * One click payment links.
      *
-     * @param array<string, mixed> $params per_page, page
+     * @param array<string, mixed> $params q, tagid, unpaid, scheduled, per_page (max 250), page
      * @throws BillitException
      */
     public function ocps(array $params = []): stdClass
@@ -266,6 +289,8 @@ class Billit
     }
 
     /**
+     * Replace the payment link (PUT). Fields you leave out are cleared, not kept.
+     *
      * @param array<string, mixed> $payload
      * @throws BillitException
      */
@@ -309,6 +334,8 @@ class Billit
     }
 
     /**
+     * @deprecated since 3.1, DELETE /payments/{id} is no longer part of the documented Billit API.
+     *             It will be removed in 4.0.
      * @throws BillitException
      */
     public function paymentDelete(int $resourceId): stdClass
@@ -386,7 +413,7 @@ class Billit
     }
 
     /**
-     * GET and DELETE send $data as the query string, POST and PUT as a JSON body.
+     * GET and DELETE send $data as the query string, POST, PUT and PATCH as a JSON body.
      *
      * @param array<string, mixed> $data
      * @throws BillitException
@@ -394,7 +421,7 @@ class Billit
     private function request(string $method, string $uri, array $data = []): stdClass
     {
         $options = ['headers' => ['Authorization' => 'Bearer ' . $this->token]];
-        if (in_array($method, ['POST', 'PUT'], true)) {
+        if (in_array($method, ['POST', 'PUT', 'PATCH'], true)) {
             $options['json'] = $data;
         } elseif ($data !== []) {
             $options['query'] = $data;
@@ -429,13 +456,16 @@ class Billit
         } catch (BillitException) {
             $body = null;
         }
-        $message = trim(($body->error ?? $response->getReasonPhrase()) . ': ' . ($body->message ?? ''), ' :');
+        // Most errors use {"error", "message"}; 403s for token abilities use {"msg"}.
+        $detail = $body->message ?? $body->msg ?? '';
+        $message = trim(($body->error ?? $response->getReasonPhrase()) . ': ' . (is_string($detail) ? $detail : ''), ' :');
         $message = "Billit API responded with {$status}" . ($message !== '' ? " ({$message})" : '');
 
         return match (true) {
             $status === 400, $status === 422 => new ValidationException($message, $status, $body, $previous),
             $status === 401, $status === 403 => new AuthenticationException($message, $status, $body, $previous),
             $status === 404 => new NotFoundException($message, $status, $body, $previous),
+            $status === 409 => new ConflictException($message, $status, $body, $previous),
             $status === 429 => new RateLimitException(
                 $message,
                 $status,

@@ -1,5 +1,25 @@
 # Changelog
 
+## 3.1.0
+
+Brings the client in line with the updated [API reference](https://billit.io/apidocs/api/account).
+
+### Added
+- `contactPatch($id, $payload)` for `PATCH /contacts/{id}`, which changes only the fields you send
+- `ConflictException` for 409 responses, sent when an invoice update includes `loaded_at` and the invoice changed since
+- `incidentId()` on every exception, returning the `data.insidentId` the API logs unexpected errors under
+- Docblocks for the documented list filters of `invoices()`, `ocps()` and `products()`
+
+### Changed
+- The `*Update()` docblocks and the README now warn that `PUT` replaces the whole resource
+- README examples: `customerType` vs `contactType`, no deprecated `excludeMydata`
+
+### Fixed
+- 403 errors for missing token abilities now include the API's `msg` in the exception message
+
+### Deprecated
+- `paymentDelete()`. `DELETE /payments/{id}` is no longer documented. It will be removed in 4.0
+
 ## 3.0.0
 
 See [UPGRADE.md](UPGRADE.md) for the breaking changes.
