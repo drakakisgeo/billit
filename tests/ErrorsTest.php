@@ -5,6 +5,7 @@ namespace Drakakisgeo\Billit\Tests;
 use Drakakisgeo\Billit\Billit;
 use Drakakisgeo\Billit\Exceptions\AuthenticationException;
 use Drakakisgeo\Billit\Exceptions\BillitException;
+use Drakakisgeo\Billit\Exceptions\ConflictException;
 use Drakakisgeo\Billit\Exceptions\ConnectionException;
 use Drakakisgeo\Billit\Exceptions\NotFoundException;
 use Drakakisgeo\Billit\Exceptions\RateLimitException;
@@ -33,6 +34,7 @@ class ErrorsTest extends TestCase
             [403, AuthenticationException::class],
             [404, NotFoundException::class],
             [405, BillitException::class],
+            [409, ConflictException::class],
             [422, ValidationException::class],
             [429, RateLimitException::class],
             [500, ServerException::class],
@@ -72,6 +74,56 @@ class ErrorsTest extends TestCase
             $this->fail('Expected an exception');
         } catch (ValidationException $e) {
             $this->assertSame(['company' => ["The 'Company' field is required."]], $e->errors());
+        }
+    }
+
+    #[Test]
+    public function token_ability_errors_include_the_msg(): void
+    {
+        $billit = $this->billit($this->json(['msg' => "This token does not have the 'write' ability."], 403));
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage("Billit API responded with 403 (Forbidden: This token does not have the 'write' ability.)");
+        $billit->contactCreate([]);
+    }
+
+    #[Test]
+    public function stale_invoice_updates_throw_a_conflict_exception(): void
+    {
+        $billit = $this->billit($this->json(['statusCode' => 409, 'error' => 'Conflict'], 409));
+
+        $this->expectException(ConflictException::class);
+        $billit->invoiceUpdate('abc', ['loaded_at' => '2026-11-06 10:00:00']);
+    }
+
+    #[Test]
+    public function logged_errors_expose_the_incident_id(): void
+    {
+        $billit = $this->billit($this->json([
+            'statusCode' => 500,
+            'error' => 'Server Error',
+            'message' => 'Logged so the Admin can take a look.',
+            'data' => ['insidentId' => '8dc6e605-dd53-4180-9026-db9316a87967'],
+        ], 500));
+
+        try {
+            $billit->invoiceCreate([]);
+            $this->fail('Expected an exception');
+        } catch (ServerException $e) {
+            $this->assertSame('8dc6e605-dd53-4180-9026-db9316a87967', $e->incidentId());
+        }
+    }
+
+    #[Test]
+    public function the_incident_id_is_null_when_absent(): void
+    {
+        $billit = $this->billit($this->json(['statusCode' => 404, 'error' => 'Not found', 'data' => []], 404));
+
+        try {
+            $billit->invoiceShow('abc');
+            $this->fail('Expected an exception');
+        } catch (NotFoundException $e) {
+            $this->assertNull($e->incidentId());
         }
     }
 
